@@ -11,8 +11,19 @@ export class KategoriService {
     return 'This action adds a new kategori';
   }
 
-  findAll() {
-    return `Raditya Ahmad`;
+  async findAll() {
+    // tampilkan data
+    const data = await this.prisma.kategori.findMany({
+      orderBy: {
+        id: 'asc',
+      },
+      select: {
+        id: true,
+        nama: true,
+      },
+    });
+
+    return data;
   }
 
   findOne(id: number) {
