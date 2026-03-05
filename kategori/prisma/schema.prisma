@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -17,4 +17,10 @@ datasource db {
 model Kategori {
   id   Int    @id @default(autoincrement())
   nama String @db.VarChar(20)
+}
+
+model User {
+  id    Int    @id @default(autoincrement())
+  nama  String
+  email String @unique
 }
