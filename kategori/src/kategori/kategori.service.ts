@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { CreateKategoriDto } from './dto/create-kategori.dto';
 import { UpdateKategoriDto } from './dto/update-kategori.dto';
 import { PrismaService } from '../prisma.service';
+import { metadata } from 'reflect-metadata/no-conflict';
 
 @Injectable()
 export class KategoriService {
@@ -12,7 +13,6 @@ export class KategoriService {
   }
 
   async findAll() {
-    // tampilkan data
     const data = await this.prisma.kategori.findMany({
       orderBy: {
         id: 'asc',
@@ -23,7 +23,27 @@ export class KategoriService {
       },
     });
 
-    return data;
+    if (data.length === 0) {
+      return {
+        success: false,
+        message: 'data tidak ditemukan',
+        metadata: {
+          status: HttpStatus.NOT_FOUND,
+          total_data: data.length,
+        },
+        data: data,
+      };
+    }
+
+    return {
+      success: true,
+      message: 'data berhasil ditemukan',
+      metadata: {
+        status: HttpStatus.OK,
+        total_data: data.length,
+      },
+      data: data,
+    };
   }
 
   findOne(id: number) {
