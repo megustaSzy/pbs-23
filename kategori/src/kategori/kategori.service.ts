@@ -1,15 +1,16 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateKategoriDto } from './dto/create-kategori.dto';
 import { UpdateKategoriDto } from './dto/update-kategori.dto';
 import { PrismaService } from '../prisma.service';
-import { metadata } from 'reflect-metadata/no-conflict';
 
 @Injectable()
 export class KategoriService {
   // buat constructor untuk inject prisma service
   constructor(private readonly prisma: PrismaService) {}
-  create(createKategoriDto: CreateKategoriDto) {
-    return 'This action adds a new kategori';
+  async create(createKategoriDto: CreateKategoriDto) {
+    return this.prisma.kategori.create({
+      data: createKategoriDto,
+    });
   }
 
   async findAll() {
@@ -24,15 +25,17 @@ export class KategoriService {
     });
 
     if (data.length === 0) {
-      return {
-        success: false,
-        message: 'data tidak ditemukan',
-        metadata: {
-          status: HttpStatus.NOT_FOUND,
-          total_data: data.length,
+      throw new HttpException(
+        {
+          success: false,
+          message: 'data kategori tidak ditemukan',
+          metadata: {
+            status: HttpStatus.NOT_FOUND,
+            total_data: data.length,
+          },
         },
-        data: data,
-      };
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     return {
@@ -46,8 +49,21 @@ export class KategoriService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} kategori`;
+  async findOne(id: number) {
+    const data = await this.prisma.kategori.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'data berhasil ditemukan',
+      metadata: {
+        status: HttpStatus.OK,
+      },
+      data: data,
+    };
   }
 
   update(id: number, updateKategoriDto: UpdateKategoriDto) {

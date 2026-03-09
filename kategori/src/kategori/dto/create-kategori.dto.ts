@@ -1,2 +1,3 @@
-export class CreateKategoriDto {z}
-    
+export class CreateKategoriDto {
+  nama!: string;
+}
