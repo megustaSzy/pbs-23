@@ -13,9 +13,19 @@ export class KategoriService {
   // buat constructor untuk inject prisma service
   constructor(private readonly prisma: PrismaService) {}
   async create(createKategoriDto: CreateKategoriDto) {
-    return this.prisma.kategori.create({
-      data: createKategoriDto,
+    await this.prisma.kategori.create({
+      data: {
+        nama: createKategoriDto.nama,
+      },
     });
+
+    return {
+      success: true,
+      message: 'data kategori berhasil disimpan',
+      metadata: {
+        status: HttpStatus.CREATED,
+      },
+    };
   }
 
   async findAll() {
