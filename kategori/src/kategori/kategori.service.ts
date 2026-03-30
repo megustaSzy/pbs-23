@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -10,50 +11,74 @@ import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class KategoriService {
-  // buat constructor untuk inject prisma service
   constructor(private readonly prisma: PrismaService) {}
+
   async create(createKategoriDto: CreateKategoriDto) {
-    await this.prisma.kategori.create({
+    // [PERBAIKAN 1]: Tambahkan ini agar tidak crash (TypeError) saat data kosong
+    if (!createKategoriDto || !createKategoriDto.nama) {
+      throw new HttpException(
+        'Nama Kategori tidak boleh kosong',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Buat variabel untuk filter nama
+    const nama_filter = createKategoriDto.nama
+      .replace(/\s/g, '')
+      .toLowerCase()
+      .trim();
+
+    // Cek Apakah nama kategori sudah ada di database?
+    // ganti nama jadi nama_filter
+
+    // [PERBAIKAN 2]: Ambil semua data, lalu hilangkan spasi pada data database
+    // untuk dicocokkan dengan nama_filter inputan user
+    const allKategori = await this.prisma.kategori.findMany();
+    const exist = allKategori.find(
+      (kategori) =>
+        kategori.nama.replace(/\s/g, '').toLowerCase() === nama_filter,
+    );
+
+    // Jika nama kategori sudah ada
+    if (exist) {
+      throw new ConflictException({
+        success: false,
+        message: 'Data Kategori Gagal Disimpan! (Nama Kategori Sudah Ada)',
+        metadata: {
+          status: HttpStatus.CONFLICT,
+        },
+      });
+    }
+
+    // Jika nama kategori belum ada
+
+    // Simpan data kategori ke database
+    const data = await this.prisma.kategori.create({
       data: {
         nama: createKategoriDto.nama,
+        nama_filter: nama_filter,
       },
     });
 
+    // Mengembalikan response sukses (Hanya satu return yang dieksekusi)
     return {
       success: true,
-      message: 'data kategori berhasil disimpan',
+      message: 'Data Kategori Berhasil Disimpan',
+      data: data, // Sertakan data yang baru dibuat
       metadata: {
         status: HttpStatus.CREATED,
       },
     };
   }
 
+  // Fungsi findAll sekarang berada di luar (bukan di dalam) fungsi lain
   async findAll() {
-    const data = await this.prisma.kategori.findMany({
-      orderBy: {
-        id: 'asc',
-      },
-      select: {
-        id: true,
-        nama: true,
-      },
-    });
+    const data = await this.prisma.kategori.findMany();
 
     if (data.length === 0) {
-      // throw new HttpException(
-      //   {
-      //     success: false,
-      //     message: 'data kategori tidak ditemukan',
-      //     metadata: {
-      //       status: HttpStatus.NOT_FOUND,
-      //       total_data: data.length,
-      //     },
-      //   },
-      //   HttpStatus.NOT_FOUND,
-      // );
       throw new NotFoundException({
         success: false,
-        message: 'data kategori tidak ditemukan',
+        message: 'Data Kategori Tidak Ditemukan',
         metadata: {
           status: HttpStatus.NOT_FOUND,
           total_data: data.length,
@@ -63,7 +88,7 @@ export class KategoriService {
 
     return {
       success: true,
-      message: 'data berhasil ditemukan',
+      message: 'Data Kategori Ditemukan',
       metadata: {
         status: HttpStatus.OK,
         total_data: data.length,
@@ -72,21 +97,8 @@ export class KategoriService {
     };
   }
 
-  async findOne(id: number) {
-    const data = await this.prisma.kategori.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    return {
-      success: true,
-      message: 'data berhasil ditemukan',
-      metadata: {
-        status: HttpStatus.OK,
-      },
-      data: data,
-    };
+  findOne(id: number) {
+    return `This action returns a #${id} kategori`;
   }
 
   update(id: number, updateKategoriDto: UpdateKategoriDto) {
