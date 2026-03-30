@@ -118,11 +118,11 @@ export class KategoriService {
 
     return {
       success: true,
-      message: 'Data Berhasil Ditampilkan',
-      data: data, // Sertakan data yang baru dibuat
+      message: 'Data Kategori Ditemukan',
       metadata: {
         status: HttpStatus.OK,
       },
+      data: data,
     };
   }
 
