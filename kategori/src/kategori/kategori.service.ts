@@ -143,7 +143,51 @@ export class KategoriService {
     return `This action updates a #${id} kategori`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} kategori`;
+  async remove(id: number) {
+    // return `This action removes a #${id} kategori`;
+    try {
+      const data = await this.prisma.kategori.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!data) {
+        throw new NotFoundException({
+          success: false,
+          message: 'Data Kategori Tidak Ditemukan',
+          metadata: {
+            status: HttpStatus.NOT_FOUND,
+          },
+        });
+      }
+
+      // hapus
+      await this.prisma.kategori.delete({
+        where: {
+          id,
+        },
+      });
+
+      // jika kategori ditemukan
+      return {
+        success: true,
+        message: 'Data Kategori Berhasil dihapus',
+        metadata: {
+          status: HttpStatus.OK,
+        },
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException({
+        success: false,
+        message: 'Parameter Harus Angka',
+        metadata: {
+          status: HttpStatus.BAD_REQUEST,
+        },
+      });
+    }
   }
 }
