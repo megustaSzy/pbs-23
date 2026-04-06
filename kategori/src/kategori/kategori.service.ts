@@ -140,12 +140,9 @@ export class KategoriService {
   }
 
   async update(id: number, updateKategoriDto: UpdateKategoriDto) {
-    // return `This action updates a #${id} kategori`;
     try {
       const data = await this.prisma.kategori.findUnique({
-        where: {
-          id: id,
-        },
+        where: { id },
       });
 
       if (!data) {
@@ -158,24 +155,26 @@ export class KategoriService {
         });
       }
 
-      // ubah data kategori berdasarkan id
-      await this.prisma.kategori.update({
-        where: {
-          id: id,
-        },
-        data: {
-          nama: updateKategoriDto,
-          nama_filter: nama_filter,
-        },
-      });
+      const nama_filter = (updateKategoriDto.nama || '')
+        .replace(/\s/g, '')
+        .toLowerCase()
+        .trim();
+
+      if (nama_filter)
+        await this.prisma.kategori.update({
+          where: { id },
+          data: {
+            nama: updateKategoriDto.nama,
+            nama_filter: nama_filter,
+          },
+        });
 
       return {
         success: true,
-        message: 'Data Kategori Ditemukan',
+        message: 'Data Kategori Berhasil Diperbarui',
         metadata: {
           status: HttpStatus.OK,
         },
-        data: data,
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
