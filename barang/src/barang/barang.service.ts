@@ -1,14 +1,54 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateBarangDto } from './dto/create-barang.dto';
 import { UpdateBarangDto } from './dto/update-barang.dto';
 import { PrismaService } from '../prisma.service';
-import { metadata } from 'reflect-metadata/no-conflict';
 
 @Injectable()
 export class BarangService {
   constructor(private readonly prisma: PrismaService) {}
-  create(createBarangDto: CreateBarangDto) {
-    return 'This action adds a new barang';
+  async create(createBarangDto: CreateBarangDto) {
+    if (!createBarangDto) {
+      throw new HttpException(
+        'Data Tidak Boleh Kosong',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const exist = await this.prisma.barang.findFirst({
+      where: {
+        kode: createBarangDto.kode,
+      },
+    });
+
+    if (exist) {
+      throw new ConflictException({
+        success: false,
+        message: 'Data Barang Berhasil Ditambahkan',
+        metadata: {
+          status: HttpStatus.CONFLICT,
+        },
+      });
+    }
+
+    const data = await this.prisma.barang.create({
+      data: createBarangDto,
+    });
+
+    return {
+      success: true,
+      message: '',
+      data: data,
+      metadata: {
+        status: HttpStatus.CREATED,
+      },
+    };
   }
 
   async findAll() {
