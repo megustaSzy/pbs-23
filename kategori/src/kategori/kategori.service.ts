@@ -11,6 +11,7 @@ import { UpdateKategoriDto } from './dto/update-kategori.dto';
 import { PrismaService } from '../prisma.service';
 import { notExistKategori } from '../common/utils/notExistKategori';
 import { checkConflictKategori } from '../common/utils/checkConflictKategori';
+import { badResponseKategori } from '../common/utils/badResponseKategori';
 
 @Injectable()
 export class KategoriService {
@@ -100,13 +101,7 @@ export class KategoriService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException({
-        success: false,
-        message: process.env.BAD_REQUEST_SAVE,
-        metadata: {
-          status: HttpStatus.BAD_REQUEST,
-        },
-      });
+      return badResponseKategori(process.env.BAD_REQUEST_SAVE!);
     }
   }
 
@@ -155,13 +150,7 @@ export class KategoriService {
         throw error;
       }
 
-      throw new BadRequestException({
-        success: false,
-        message: process.env.BAD_REQUEST_SAVE,
-        metadata: {
-          status: HttpStatus.BAD_REQUEST,
-        },
-      });
+      return badResponseKategori(process.env.BAD_REQUEST_SAVE!);
     }
   }
 
@@ -193,13 +182,7 @@ export class KategoriService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException({
-        success: false,
-        message: process.env.BAD_REQUEST_SAVE,
-        metadata: {
-          status: HttpStatus.BAD_REQUEST,
-        },
-      });
+      return badResponseKategori(process.env.BAD_REQUEST_SAVE!);
     }
   }
 }
