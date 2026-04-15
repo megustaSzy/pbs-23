@@ -10,6 +10,7 @@ import { CreateKategoriDto } from './dto/create-kategori.dto';
 import { UpdateKategoriDto } from './dto/update-kategori.dto';
 import { PrismaService } from '../prisma.service';
 import { notExistKategori } from '../common/utils/notExistKategori';
+import { checkConflictKategori } from '../common/utils/checkConflictKategori';
 
 @Injectable()
 export class KategoriService {
@@ -24,33 +25,12 @@ export class KategoriService {
       );
     }
 
-    // Buat variabel untuk filter nama
-    const nama_filter = createKategoriDto.nama
-      .replace(/\s/g, '')
-      .toLowerCase()
-      .trim();
-
-    // Cek Apakah nama kategori sudah ada di database?
-    // ganti nama jadi nama_filter
-
-    // [PERBAIKAN 2]: Ambil semua data, lalu hilangkan spasi pada data database
-    // untuk dicocokkan dengan nama_filter inputan user
-    const allKategori = await this.prisma.kategori.findMany();
-    const exist = allKategori.find(
-      (kategori) =>
-        kategori.nama.replace(/\s/g, '').toLowerCase() === nama_filter,
+    // panggil fungsi conflict kategori
+    const nama_filter = await checkConflictKategori(
+      this.prisma.kategori,
+      process.env.FAILED_SAVE!,
+      createKategoriDto.nama,
     );
-
-    // Jika nama kategori sudah ada
-    if (exist) {
-      throw new ConflictException({
-        success: false,
-        message: process.env.FAILED_SAVE,
-        metadata: {
-          status: HttpStatus.CONFLICT,
-        },
-      });
-    }
 
     // Jika nama kategori belum ada
 
@@ -80,7 +60,7 @@ export class KategoriService {
     if (data.length === 0) {
       throw new NotFoundException({
         success: false,
-        message: 'Data Kategori Tidak Ditemukan',
+        message: process.env.NOT_FOUND_SAVE,
         metadata: {
           status: HttpStatus.NOT_FOUND,
           total_data: data.length,
@@ -105,12 +85,12 @@ export class KategoriService {
       const data = await notExistKategori(
         this.prisma.kategori,
         id,
-        process.env.NOT_FOUND_KATEGORI!,
+        process.env.NOT_FOUND_SAVE!,
       );
 
       return {
         success: true,
-        message: 'Data Kategori Ditemukan',
+        message: process.env.FOUND_SAVE,
         metadata: {
           status: HttpStatus.OK,
         },
@@ -122,7 +102,7 @@ export class KategoriService {
       }
       throw new BadRequestException({
         success: false,
-        message: 'Parameter Harus Angka',
+        message: process.env.BAD_REQUEST_SAVE,
         metadata: {
           status: HttpStatus.BAD_REQUEST,
         },
@@ -135,30 +115,15 @@ export class KategoriService {
       await notExistKategori(
         this.prisma.kategori,
         id,
-        'Data Kategori Tidak Ditemukan',
+        process.env.NOT_FOUND_SAVE!,
       );
 
-      const nama_filter = (updateKategoriDto.nama || '')
-        .replace(/\s/g, '')
-        .toLowerCase()
-        .trim();
-
-      const exist = await this.prisma.kategori.findFirst({
-        where: {
-          NOT: { id: id },
-          nama_filter: nama_filter,
-        },
-      });
-
-      if (exist) {
-        throw new ConflictException({
-          success: false,
-          message: 'Data Kategori Gagal Diubah! (Nama Kategori Sudah Ada)',
-          metadata: {
-            status: HttpStatus.CONFLICT,
-          },
-        });
-      }
+      const nama_filter = await checkConflictKategori(
+        this.prisma.kategori,
+        process.env.FAILED_SAVE!,
+        updateKategoriDto.nama ?? '',
+        id,
+      );
 
       if (nama_filter)
         await this.prisma.kategori.update({
@@ -171,7 +136,7 @@ export class KategoriService {
 
       return {
         success: true,
-        message: 'Data Kategori Berhasil Diperbarui',
+        message: process.env.UPDATE_SAVE,
         metadata: {
           status: HttpStatus.OK,
         },
@@ -192,7 +157,7 @@ export class KategoriService {
 
       throw new BadRequestException({
         success: false,
-        message: 'Parameter Harus Angka',
+        message: process.env.BAD_REQUEST_SAVE,
         metadata: {
           status: HttpStatus.BAD_REQUEST,
         },
@@ -230,7 +195,7 @@ export class KategoriService {
       }
       throw new BadRequestException({
         success: false,
-        message: 'Parameter Harus Angka',
+        message: process.env.BAD_REQUEST_SAVE,
         metadata: {
           status: HttpStatus.BAD_REQUEST,
         },

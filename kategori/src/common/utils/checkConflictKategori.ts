@@ -3,11 +3,11 @@ import { CreateKategoriDto } from '../../kategori/dto/create-kategori.dto';
 import { PrismaService } from '../../prisma.service';
 
 // fungsi check conflict kategori
-export const checkDuplikasiConflict = async (
+export const checkConflictKategori = async (
   prisma: PrismaService['kategori'],
-  id: number,
   message: string,
   nama: string,
+  id?: number,
 ) => {
   const nama_filter = nama.replace(/\s/g, '').toLowerCase().trim();
 
@@ -15,10 +15,9 @@ export const checkDuplikasiConflict = async (
   // untuk dicocokkan dengan nama_filter inputan user
   const exist = await prisma.findFirst({
     where: {
-      NOT: {
-        id,
-      },
       nama_filter: nama_filter,
+      // spread operator
+      ...(id ? { NOT: { id: id } } : undefined),
     },
   });
 
@@ -32,4 +31,6 @@ export const checkDuplikasiConflict = async (
       },
     });
   }
+
+  return nama_filter;
 };
