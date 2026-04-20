@@ -58,7 +58,7 @@ export class KategoriService {
   async findAll() {
     const data = await this.prisma.kategori.findMany();
 
-    if (data.length === 0) {
+    if (data.length !== 0) {
       throw new NotFoundException({
         success: false,
         message: process.env.NOT_FOUND_SAVE,
@@ -79,7 +79,6 @@ export class KategoriService {
       data: data,
     };
   }
-
   // fungsi detail data
   async findOne(id: number) {
     try {
